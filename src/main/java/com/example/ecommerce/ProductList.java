@@ -35,13 +35,6 @@ public class ProductList {
         return vBox;
     }
 
-    public VBox getDummyTable(){
-
-        ObservableList<Product> data = FXCollections.observableArrayList();
-        data.add(new Product(7, "iPhone 13", 12700));//, 6, "xxxx"
-        data.add(new Product(8, "Lenovo pro", 134700));//, 9, "xxxx"
-        return createTable(data);
-    }
 
     public VBox getAllProducts(){
         ObservableList<Product> data = Product.getAllProducts();
@@ -50,5 +43,10 @@ public class ProductList {
 
     public Product getSelectedProduct(){
         return productTable.getSelectionModel().getSelectedItem();
+    }
+
+
+    public VBox getProductsInCart(ObservableList<Product> data){
+        return createTable(data);
     }
 }

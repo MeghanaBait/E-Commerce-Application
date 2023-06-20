@@ -1,10 +1,14 @@
 package com.example.ecommerce;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -19,6 +23,8 @@ public class UserInterface {
     Customer loggedinCustomer;
     ProductList productList = new ProductList();
     VBox productPage;
+    Button placeOrderButton = new Button(("Place Order"));
+    ObservableList<Product> itemsInCart = FXCollections.observableArrayList();
     public BorderPane createUI(){
         BorderPane root = new BorderPane();
         root.setPrefSize(800,600);
@@ -91,6 +97,14 @@ public class UserInterface {
 
 
     private void createHeaderBar(){
+        Button homeButton = new Button();
+        Image image = new Image("C:\\Users\\Meghana\\IdeaProjects\\ECommerce\\src\\main\\java\\com\\example\\ecommerce\\img.png");
+        ImageView imageView = new ImageView();
+        imageView.setImage(image);
+        imageView.setFitWidth(80);
+        imageView.setFitHeight(20);
+        homeButton.setGraphic(imageView);
+
         TextField searchBar = new TextField();
         searchBar.setPromptText("Search here");
         searchBar.setPrefWidth(280);
@@ -100,12 +114,17 @@ public class UserInterface {
         signinButton = new Button("Sign In");
         welcomeLabel = new Label();
 
+        Button cartButton = new Button("Cart");
+
+        Button orderButton = new Button("Orders");
+
+
         headerBar = new HBox();
         headerBar.setPadding(new Insets(10));
         //headerBar.setStyle("-fx-background-color : BLACK;");
         headerBar.setSpacing(10);
         headerBar.setAlignment(Pos.CENTER);
-        headerBar.getChildren().addAll(searchBar, searchButton, signinButton);
+        headerBar.getChildren().addAll(homeButton,searchBar, searchButton, signinButton, cartButton, orderButton);
 
         signinButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -116,17 +135,73 @@ public class UserInterface {
 
             }
         });
+
+
+        cartButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                body.getChildren().clear();
+                VBox prodPage = productList.getProductsInCart(itemsInCart);
+                prodPage.setAlignment(Pos.CENTER);
+                prodPage.setSpacing(10);
+                prodPage.getChildren().add(placeOrderButton);
+                body.getChildren().add(prodPage);
+                footerBar.setVisible(false);
+            }
+        });
+
+        placeOrderButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                //need list of product and customer
+                Product product = productList.getSelectedProduct();
+                if(itemsInCart == null){
+                    //please select a product first to place order
+                    showDialog("Please add some products in the cart to place order");
+                    return;
+                }
+
+                if(loggedinCustomer == null){
+                    showDialog("Please login first to place order");
+                    return;
+                }
+
+                int count = Order.placeMultipleOrder(loggedinCustomer,itemsInCart);
+                if(count != 0){
+                    showDialog("Order for "+count+" Products placed successfully");
+                }
+                else{
+                    showDialog("order failed!");
+                }
+
+            }
+        });
+
+        homeButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                body.getChildren().clear();
+                body.getChildren().add(productPage);
+                footerBar.setVisible(true);
+                if(loggedinCustomer == null){
+                    if( headerBar.getChildren().indexOf(signinButton) == -1) {
+                        headerBar.getChildren().add(signinButton);
+                    }
+                }
+            }
+        });
     }
 
     private void createFooterBar(){
         Button buyNowButton = new Button("Buy Now");
+        Button addToCartButton = new Button("Add to Cart");
 
         footerBar = new HBox();
         footerBar.setPadding(new Insets(10));
         //headerBar.setStyle("-fx-background-color : BLACK;");
         footerBar.setSpacing(10);
         footerBar.setAlignment(Pos.CENTER);
-        footerBar.getChildren().addAll(buyNowButton);
+        footerBar.getChildren().addAll(buyNowButton, addToCartButton);
 
         buyNowButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -145,7 +220,7 @@ public class UserInterface {
 
                 boolean status = Order.placeOrder(loggedinCustomer,product);
                 if(status == true){
-                    showDialog("Order Placed Successfully!!");
+                    showDialog("Order placed successfully!!");
                 }
                 else{
                     showDialog("order failed!");
@@ -153,10 +228,25 @@ public class UserInterface {
 
             }
         });
+
+        addToCartButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                Product product = productList.getSelectedProduct();
+                if(product == null){
+                    //please select a product first to place order
+                    showDialog("Please select a product first to add it to Cart");
+                    return;
+                }
+                itemsInCart.add(product);
+                showDialog("Selected product has been added to the cart successfully");
+            }
+        });
+
     }
 
     private void showDialog(String message){
-        Alert alert = new Alert(Alert.AlertType.WARNING);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.setTitle("Alert");
